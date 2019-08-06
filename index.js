@@ -7,7 +7,7 @@ import {
   Platform,
   StyleSheet,
 } from 'react-native'
-import { FileSystem } from 'expo'
+import * as FileSystem from 'expo-file-system'
 import { Constants } from 'expo'
 
 const {
