@@ -178,6 +178,10 @@ class Reader extends Component {
   render() {
     const { numPages, currentPage, cached, ready } = this.state
     const { file } = this.props
+    const pages = [];
+    for (let i = 1; i <= numPages; i++) {
+      pages.push(i);
+    }
     return (
       <div className="Reader">
         <div className="Reader__container">
@@ -190,7 +194,7 @@ class Reader extends Component {
               onLoadError={this.onError}
               onSourceError={this.onError}
             >
-              {this.renderPage(currentPage)}
+              {pages.map(i => this.renderPage(i))}
             </Document>
           </div>
 
@@ -216,29 +220,6 @@ class Reader extends Component {
               onClick={this.zoomOut}
             >
               <Minus />
-            </div>
-          </div>
-
-          <div className={'Reader__container__navigate'}>
-            <div
-              className="Reader__container__navigate__arrow"
-              style={
-                currentPage === 1 ? { color: 'rgba(255,255,255,0.2)' } : {}
-              }
-              onClick={this.goUp}
-            >
-              <Up />
-            </div>
-            <div
-              className="Reader__container__navigate__arrow"
-              style={
-                currentPage === numPages
-                  ? { color: 'rgba(255,255,255,0.2)' }
-                  : {}
-              }
-              onClick={this.goDown}
-            >
-              <Down />
             </div>
           </div>
         </div>
