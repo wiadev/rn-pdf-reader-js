@@ -2,10 +2,6 @@ import React, { Component } from 'react'
 import { render } from 'react-dom'
 import { Page, setOptions, Document } from 'react-pdf'
 import raf, { cancel } from 'raf'
-import Plus from './components/Plus'
-import Minus from './components/Minus'
-import Down from './components/down'
-import Up from './components/up'
 import './Reader.less'
 
 const ReactContainer = document.querySelector('#react-container')
@@ -27,6 +23,7 @@ class Reader extends Component {
     pageRendered: false,
     getText: false,
     scale: 0.75,
+    loading: true,
   }
 
   MAX_SCALE = 2
@@ -35,7 +32,10 @@ class Reader extends Component {
   pageRefs = new Map()
 
   onDocumentLoadSuccess = ({ numPages }) => {
-    this.setState({ numPages })
+    this.setState({
+      numPages,
+      loading: false
+    })
   }
 
   onError = error =>
@@ -176,7 +176,7 @@ class Reader extends Component {
   }
 
   render() {
-    const { numPages, currentPage, cached, ready } = this.state
+    const { numPages, currentPage, cached, ready, loading } = this.state
     const { file } = this.props
     const pages = [];
     for (let i = 1; i <= numPages; i++) {
@@ -198,7 +198,7 @@ class Reader extends Component {
             </Document>
           </div>
 
-          {!cached && this.renderLoader()}
+          {loading && this.renderLoader()}
 
           {numPages && (
             <div className="Reader__container__numbers">
@@ -207,21 +207,6 @@ class Reader extends Component {
               </div>
             </div>
           )}
-
-          <div className="Reader__container__zoom_container">
-            <div
-              className="Reader__container__zoom_container__button"
-              onClick={this.zoomIn}
-            >
-              <Plus />
-            </div>
-            <div
-              className="Reader__container__zoom_container__button"
-              onClick={this.zoomOut}
-            >
-              <Minus />
-            </div>
-          </div>
         </div>
       </div>
     )
