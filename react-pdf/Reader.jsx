@@ -85,48 +85,6 @@ class Reader extends Component {
     }
   }
 
-  up = () => {
-    const { currentPage } = this.state
-    if (currentPage > 1) {
-      const target = currentPage - 1
-      this.setState({ currentPage: target })
-      if (!this.pageImgs.has(target)) {
-        this.setState({
-          pageLoaded: false,
-          pageRendered: false,
-          getText: false,
-        })
-      }
-    }
-    cancel(this.up)
-  }
-
-  down = () => {
-    const { currentPage, numPages } = this.state
-    if (currentPage < numPages) {
-      const target = currentPage + 1
-      this.setState({ currentPage: target })
-      if (!this.pageImgs.has(target)) {
-        this.setState({
-          pageLoaded: false,
-          pageRendered: false,
-          getText: false,
-        })
-      }
-    }
-    cancel(this.down)
-  }
-
-  goUp = event => {
-    event.preventDefault()
-    raf(this.up)
-  }
-
-  goDown = event => {
-    event.preventDefault()
-    raf(this.down)
-  }
-
   renderLoader = () => (
     <div
       style={{
@@ -199,14 +157,6 @@ class Reader extends Component {
           </div>
 
           {loading && this.renderLoader()}
-
-          {numPages && (
-            <div className="Reader__container__numbers">
-              <div className="Reader__container__numbers__content">
-                {currentPage} / {numPages}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     )
