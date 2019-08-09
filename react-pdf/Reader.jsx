@@ -22,11 +22,8 @@ class Reader extends Component {
     pageLoaded: false,
     pageRendered: false,
     getText: false,
-    scale: 0.75,
     loading: true,
   }
-
-  MAX_SCALE = 2
   __zoomEvent = false
 
   pageRefs = new Map()
@@ -47,41 +44,6 @@ class Reader extends Component {
         pageKey,
         this.pageRefs.get(pageKey).children[0].toDataURL('image/png'),
       )
-    }
-  }
-
-  zoomOut = event => {
-    event.preventDefault()
-    if (!this.__zoomEvent) {
-      raf(this.zOut)
-    }
-  }
-
-  zoomIn = event => {
-    event.preventDefault() // this too
-    if (!this.__zoomEvent) {
-      raf(this.zIn)
-    }
-  }
-
-  zOut = () => {
-    console.log(this.state.scale)
-    if (this.state.scale >= 0.75) {
-      // min scale out is 0.5 and defaults @ 0.75
-      this.__zoomEvent = true
-      this.setState(previousState => ({
-        scale: previousState.scale - 0.25,
-      }))
-    }
-  }
-
-  zIn = () => {
-    console.log(this.state.scale)
-    if (this.state.scale <= this.MAX_SCALE - 0.25) {
-      this.__zoomEvent = true
-      this.setState(previousState => ({
-        scale: previousState.scale + 0.25,
-      }))
     }
   }
 
@@ -116,6 +78,7 @@ class Reader extends Component {
   }
 
   renderPage = pageNumber => {
+    const w = parseInt(document.getElementById("sw").value)
     return (
       <Page
         loading={' '}
@@ -128,7 +91,7 @@ class Reader extends Component {
         onGetTextError={this.onError}
         onRenderSuccess={() => this.onPageReadyToCache({ pageRendered: true })}
         onGetTextSuccess={() => this.onPageReadyToCache({ getText: true })}
-        scale={this.state.scale}
+        width={w}
       />
     )
   }

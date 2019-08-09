@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Platform,
   StyleSheet,
+  Dimensions,
 } from 'react-native'
 import * as FileSystem from 'expo-file-system'
 import { Constants } from 'expo'
@@ -27,6 +28,7 @@ function viewerHtml(base64: string): string {
    </head>
    <body>
      <div id="file" data-file="${base64}"></div>
+     <input type="hidden" id="sw" value="${Dimensions.get('window').width}" />
      <div id="react-container"></div>
      <script type="text/javascript" src="bundle.js"></script>
    </body>
@@ -198,9 +200,6 @@ class PdfReader extends Component<Props, State> {
             allowFileAccess
             style={styles.webview}
             source={{ uri: htmlPath }}
-            mixedContentMode="always"
-            scrollEnabled
-            height="100vh"
           />
         </View>
       )
