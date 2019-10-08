@@ -1,20 +1,6 @@
 <h1 align="center">PDF reader for Expo</h1>
 <p align="center">Android support 🚀</p>
 
-<p align="center">
-   <img width="250" src="https://thumbs.gfycat.com/DeadPoisedBrownbutterfly-max-14mb.gif" />
-   <br/>
-   <br/>
-   <br/>
-   <br/>
-   <a href="https://www.npmjs.com/package/rn-pdf-reader-js"><img alt="npm version" src="https://badge.fury.io/js/rn-pdf-reader-js.svg"/>
-   <a href="http://reactnative.gallery/xcarpentier/rn-pdf-reader-js"><img src="https://img.shields.io/badge/reactnative.gallery-%F0%9F%8E%AC-green.svg"/></a>
-</a>
-</p>
-<p align="center">
-  <a href="https://exp.host/@xcarpentier/rn-pdf-reader-example">💥 DEMO 💥</a>
-</p>
-
 ## Read a PDF just with JS (no native libs needed)
 
 ## Limitations
