@@ -25,7 +25,8 @@
   "peerDependencies": {
     "expo": "*",
     "react": "*",
-    "react-native": "*"
+    "react-native": "*",
+    "react-native-webview": "*"
   },
   "dependencies": {
     "buffer": "5.1.0",

@@ -1,54 +1,37 @@
-// @flow
 import React, { Component } from 'react'
 import {
-  WebView,
   View,
   ActivityIndicator,
   Platform,
   StyleSheet,
   Dimensions,
 } from 'react-native'
-import * as FileSystem from 'expo-file-system'
-import { Constants } from 'expo'
+import { WebView } from 'react-native-webview'
 
-const {
-  cacheDirectory,
-  writeAsStringAsync,
-  deleteAsync,
-  getInfoAsync,
-} = FileSystem
-
-function viewerHtml(base64: string): string {
+function viewerHtml(base64: string, bundle: string): string {
   return `
- <!DOCTYPE html>
- <html>
-   <head>
-     <title>PDF reader</title>
-     <meta charset="utf-8" />
-   </head>
-   <body>
-     <div id="file" data-file="${base64}"></div>
-     <input type="hidden" id="sw" value="${Dimensions.get('window').width}" />
-     <div id="react-container"></div>
-     <script type="text/javascript" src="bundle.js"></script>
-   </body>
- </html>
-`
+    <!DOCTYPE html>
+    <html>
+     <head>
+       <title>PDF reader</title>
+       <meta charset="utf-8" />
+       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+     </head>
+     <body>
+       <input type="hidden" id="sw" value="${Dimensions.get('window').width}" />
+       <div id="file" data-file="${base64}"></div>
+       <div id="react-container"></div>
+       <script type="text/javascript">${bundle}</script>
+     </body>
+    </html>
+  `
 }
-const bundleJsPath = `${cacheDirectory}bundle.js`
-const htmlPath = `${cacheDirectory}index.html`
+
+let htmlForPDF = '';
 
 async function writeWebViewReaderFileAsync(data: string): Promise<*> {
-  const { exist, md5 } = await getInfoAsync(bundleJsPath, { md5: true })
   const bundleContainer = require('./bundleContainer')
-  if (!exist || bundleContainer.getBundleMd5() !== md5) {
-    await writeAsStringAsync(bundleJsPath, bundleContainer.getBundle())
-  }
-  await writeAsStringAsync(htmlPath, viewerHtml(data))
-}
-
-export async function removeFilesAsync(): Promise<*> {
-  await deleteAsync(htmlPath)
+  htmlForPDF = viewerHtml(data, bundleContainer.getBundle())
 }
 
 function readAsTextAsync(mediaBlob: Blob): Promise<string> {
@@ -70,12 +53,12 @@ function readAsTextAsync(mediaBlob: Blob): Promise<string> {
   })
 }
 
-async function fetchPdfAsync(url: string): Promise<string> {
-  const mediaBlob = await urlToBlob(url)
+async function fetchPdfAsync(source: Source): Promise<string> {
+  const mediaBlob = await urlToBlob(source)
   return readAsTextAsync(mediaBlob)
 }
 
-async function urlToBlob(url) {
+async function urlToBlob(source: Source) {
   return new Promise((resolve, reject) => {
     var xhr = new XMLHttpRequest()
     xhr.onerror = reject
@@ -84,7 +67,15 @@ async function urlToBlob(url) {
         resolve(xhr.response)
       }
     }
-    xhr.open('GET', url)
+
+    xhr.open('GET', source.uri)
+
+    if (source.headers && Object.keys(source.headers).length > 0) {
+      Object.keys(source.headers).forEach((key) => {
+        xhr.setRequestHeader(key, source.headers[key]);
+      });
+    }
+
     xhr.responseType = 'blob'
     xhr.send()
   })
@@ -99,7 +90,7 @@ const Loader = () => (
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    //paddingTop: Constants.statusBarHeight,
+    // paddingTop: Constants.statusBarHeight,
     backgroundColor: '#ecf0f1',
   },
   webview: {
@@ -108,54 +99,67 @@ const styles = StyleSheet.create({
   },
 })
 
+type Source = {
+  uri?: string,
+  base64?: string,
+  ios: boolean,
+  data?: string,
+  headers: { [key: string]: string }
+}
+
 type Props = {
-  source: {
-    uri?: string,
-    base64?: string
-  },
-  style: object
+  source: Source,
+  style: object,
+  webviewStyle: object,
 }
 
 type State = {
   ready: boolean,
-  android: boolean,
-  ios: boolean,
+  type: string,
   data?: string,
 }
 
 class PdfReader extends Component<Props, State> {
-  state = { ready: false, android: false, ios: false, data: undefined }
+  state = {
+    ready: false,
+    data: undefined,
+    type: null,
+    android: false,
+    ios: false,
+  }
 
   async init() {
+    const { onLoad } = this.props;
     try {
       const { source } = this.props
+      let ready = false
+      let data = undefined
       const ios = Platform.OS === 'ios'
       const android = Platform.OS === 'android'
 
       this.setState({ ios, android })
-      let ready = false
-      let data = undefined
+
       if (
         source.uri &&
-        android &&
         (source.uri.startsWith('http') ||
           source.uri.startsWith('file') ||
           source.uri.startsWith('content'))
       ) {
-        data = await fetchPdfAsync(source.uri)
+        data = source.uri
         ready= !!data
+        type = 'uri'
       } else if (source.base64 && source.base64.startsWith('data')) {
         data = source.base64
         ready = true
-      } else if (ios) {
-        data = source.uri
+        type = 'html'
+        await writeWebViewReaderFileAsync(data)
       } else {
         alert('source props is not correct')
         return
       }
 
-      if (android) {
-        await writeWebViewReaderFileAsync(data)
+      if(onLoad && ready === true) {
+        onLoad();
       }
 
       this.setState({ ready, data })
@@ -169,37 +173,24 @@ class PdfReader extends Component<Props, State> {
     this.init()
   }
 
-  componentWillUnmount() {
-    if (this.state.android) {
-      removeFilesAsync()
-    }
-  }
-
   render() {
     const { ready, data, ios, android } = this.state
-    const { style } = this.props
-
-    if (data && ios) {
-      return (
-        <View style={[styles.container, style]}>
-          {!ready && <Loader />}
-          <WebView
-            onLoad={()=>this.setState({ready: true})}
-            originWhitelist={['http://*', 'https://*', 'file://*', 'data:*']}
-            style={styles.webview}
-            source={{ uri: data }}
-          />
-        </View>
-      )
+    const { style, webviewStyle  } = this.props
+    let scaleProp = {}
+    if (android) {
+      scaleProp = {
+        scalesPageToFit: false,
+      }
     }
 
-    if (ready && data && android) {
+    if (ready && data) {
       return (
         <View style={[styles.container, style]}>
           <WebView
-            allowFileAccess
-            style={styles.webview}
-            source={{ uri: htmlPath }}
+            originWhitelist={['http://*', 'https://*', 'file://*', 'data:*']}
+            style={[styles.webview, webviewStyle]}
+            source={{ [type]: type === 'html' ? htmlForPDF : data }}
+            {...scaleProp}
           />
         </View>
       )
